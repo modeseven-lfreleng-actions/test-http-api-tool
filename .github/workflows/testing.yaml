@@ -22,6 +22,10 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: "${{ github.workflow }}-${{ github.ref }}"
+  cancel-in-progress: true
+
 jobs:
   test-uvx-mode:
     name: 'Test UVX Deployment'
@@ -30,14 +34,14 @@ jobs:
     steps:
       - name: Harden Runner
         # yamllint disable-line rule:line-length
-        uses: step-security/harden-runner@f4a75cfd619ee5ce8d5b864b0d183aff3c69b55a
+        uses: step-security/harden-runner@9af89fc71515a100421586dfdb3dc9c984fbf411  # v2.19.4
         with:
           egress-policy: audit
 
       - name: Test website with UVX mode
         id: test-uvx
         # yamllint disable-line rule:line-length
-        uses: lfreleng-actions/http-api-tool-docker@main # Test current release
+        uses: lfreleng-actions/http-api-tool-docker@12a062c2289831b79166269340ffb44fa2c113e9  # v1.0.7
         with:
           deploy: uvx
           url: ${{ inputs.url || 'https://linuxfoundation.org' }}
@@ -70,14 +74,14 @@ jobs:
     steps:
       - name: Harden Runner
         # yamllint disable-line rule:line-length
-        uses: step-security/harden-runner@f4a75cfd619ee5ce8d5b864b0d183aff3c69b55a
+        uses: step-security/harden-runner@9af89fc71515a100421586dfdb3dc9c984fbf411  # v2.19.4
         with:
           egress-policy: audit
 
       - name: Test website with Docker mode
         id: test-docker
         # yamllint disable-line rule:line-length
-        uses: lfreleng-actions/http-api-tool-docker@main # Test current release
+        uses: lfreleng-actions/http-api-tool-docker@12a062c2289831b79166269340ffb44fa2c113e9  # v1.0.7
         with:
           deploy: docker
           url: ${{ inputs.url || 'https://linuxfoundation.org' }}
@@ -111,6 +115,9 @@ jobs:
     timeout-minutes: 2
     steps:
       - name: Compare performance
+        env:
+          TEST_URL: "${{ inputs.url || 'https://linuxfoundation.org' }}"
+          EXPECTED_CODE: "${{ inputs.expected_code || '200' }}"
         # yamllint disable rule:line-length
         run: |
           {
@@ -119,8 +126,8 @@ jobs:
             echo "Both deployment modes tested the same endpoint in parallel."
             echo ""
             echo "### Test Configuration"
-            echo "- **URL**: ${{ inputs.url || 'https://linuxfoundation.org' }}"
-            echo "- **Expected Code**: ${{ inputs.expected_code || '200' }}"
+            echo "- **URL**: $TEST_URL"
+            echo "- **Expected Code**: $EXPECTED_CODE"
             echo ""
             echo "### Results"
             echo "Check the individual job summaries above for detailed metrics."
